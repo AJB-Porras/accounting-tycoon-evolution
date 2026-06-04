@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accounting Tycoon Evolution</title>
+  <style>
+    :root {
+      --bg: #0f1720;
+      --panel: #172332;
+      --panel-2: #213245;
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #edf4ff;
+      --muted: #9fb4cb;
+      --accent: #69d1a6;
+      --accent-2: #ffcc66;
+      --danger: #ff7c7c;
+      --glow: rgba(105, 209, 166, 0.35);
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+      --radius: 18px;
+      --floor-light: #243546;
+      --floor-dark: #1b2938;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(88, 125, 255, 0.14), transparent 32%),
+        linear-gradient(180deg, #0b1118, #101923 28%, #0c131b);
+      min-height: 100vh;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      border: 0;
+    }
+
+    .app {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      padding: 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .topbar,
+    .controls,
+    .panel,
+    .event-card,
+    .helper,
+    .achievement-toast {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      padding: 12px;
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(10px);
+      z-index: 20;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-value {
+      font-size: clamp(16px, 2.5vw, 24px);
+      font-weight: 700;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr) 280px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 12px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .card {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .card-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      font-size: 12px;
+      color: #0d1620;
+      background: var(--accent-2);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .buy-btn,
+    .main-btn,
+    .mini-btn {
+      border-radius: 12px;
+      background: linear-gradient(180deg, #59b98f, #41886f);
+      padding: 10px 12px;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    .buy-btn:hover,
+    .main-btn:hover,
+    .mini-btn:hover {
+      filter: brightness(1.08);
+    }
+
+    .buy-btn:active,
+    .main-btn:active,
+    .mini-btn:active {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    .buy-btn[disabled],
+    .mini-btn[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: grayscale(0.2);
+    }
+
+    .center {
+      display: grid;
+      gap: 14px;
+    }
+
+    .office-wrap {
+      position: relative;
+      overflow: hidden;
+      min-height: 560px;
+      padding: 14px;
+      background:
+        linear-gradient(180deg, rgba(111, 160, 255, 0.12), transparent 30%),
+        linear-gradient(180deg, #172432 0 43%, #223040 43% 100%);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+    }
+
+    .office-wrap.stage-1 {
+      box-shadow: var(--shadow), inset 0 0 0 1px rgba(139, 211, 255, 0.08);
+    }
+
+    .office-wrap.stage-2 {
+      background:
+        linear-gradient(180deg, rgba(111, 160, 255, 0.18), transparent 32%),
+        linear-gradient(180deg, #1a2a3b 0 43%, #27384b 43% 100%);
+    }
+
+    .office-wrap.stage-3 {
+      background:
+        linear-gradient(180deg, rgba(105, 209, 166, 0.18), transparent 32%),
+        linear-gradient(180deg, #1b283a 0 43%, #2a3d4f 43% 100%);
+    }
+
+    .office-wrap.stage-4 {
+      background:
+        linear-gradient(180deg, rgba(255, 204, 102, 0.18), transparent 34%),
+        linear-gradient(180deg, #202f42 0 43%, #314457 43% 100%);
+    }
+
+    .office-wrap.stage-5 {
+      background:
+        linear-gradient(180deg, rgba(214, 163, 255, 0.18), transparent 34%),
+        linear-gradient(180deg, #223245 0 43%, #385069 43% 100%);
+    }
+
+    .office-wrap.event-panic {
+      animation: shake 400ms linear 3;
+    }
+
+    .office-wrap.event-outage .screen::after {
+      background: linear-gradient(180deg, #742727, #381212);
+    }
+
+    .office-wrap.event-rush .employee {
+      animation-duration: 1.5s;
+    }
+
+    .windows {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      height: 88px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      opacity: 0.9;
+    }
+
+    .window {
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(138, 185, 255, 0.95), rgba(86, 122, 197, 0.75)),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent);
+      border: 4px solid rgba(233, 241, 255, 0.26);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .window::after {
+      content: "";
+      position: absolute;
+      inset: 14% 52% 14% 14%;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .office-wrap.stage-4 .window,
+    .office-wrap.stage-5 .window {
+      border-color: rgba(255, 255, 255, 0.34);
+      box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.08);
+    }
+
+    .office-grid {
+      position: relative;
+      margin-top: 106px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 170px);
+      gap: 12px;
+    }
+
+    .room {
+      position: relative;
+      border-radius: 20px;
+      padding: 12px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+        repeating-linear-gradient(
+          45deg,
+          var(--floor-light),
+          var(--floor-light) 16px,
+          var(--floor-dark) 16px,
+          var(--floor-dark) 32px
+        );
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 220ms ease, opacity 220ms ease, filter 220ms ease;
+    }
+
+    .room.locked {
+      opacity: 0.46;
+      filter: saturate(0.2) brightness(0.8);
+    }
+
+    .room-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .room-theme {
+      position: absolute;
+      right: 10px;
+      top: 34px;
+      font-size: 26px;
+      opacity: 0.7;
+    }
+
+    .desks {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 16px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .desk {
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #84624d, #674835);
+      position: relative;
+      box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.18);
+    }
+
+    .desk::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 8px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .screen {
+      position: absolute;
+      top: -12px;
+      left: 10px;
+      width: 22px;
+      height: 16px;
+      border-radius: 5px;
+      background: #18263b;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .screen::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #6bc9ff, #1f7fbf);
+    }
+
+    .desk.dual .screen + .screen2,
+    .desk.erp .screen2 {
+      display: block;
+    }
+
+    .screen2 {
+      display: none;
+      position: absolute;
+      top: -12px;
+      left: 36px;
+      width: 22px;
+      height: 16px;
+      border-radius: 5px;
+      background: #18263b;
+      border: 2px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .screen2::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #7da4ff, #4461d1);
+    }
+
+    .room.coffee-room::before,
+    .room.manager-room::before,
+    .room.reporting-room::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 42px;
+      width: 40px;
+      height: 54px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+    }
+
+    .room.coffee-room::after {
+      content: "☕";
+      position: absolute;
+      left: 22px;
+      top: 56px;
+      font-size: 24px;
+    }
+
+    .room.manager-room::after {
+      content: "📊";
+      position: absolute;
+      left: 22px;
+      top: 54px;
+      font-size: 24px;
+    }
+
+    .room.reporting-room::after {
+      content: "📈";
+      position: absolute;
+      left: 22px;
+      top: 54px;
+      font-size: 24px;
+    }
+
+    .employee-layer,
+    .effects-layer,
+    .toast-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .employee {
+      position: absolute;
+      width: 24px;
+      height: 42px;
+      transform-origin: center bottom;
+      animation: bob 2.4s ease-in-out infinite;
+    }
+
+    .employee.walking {
+      animation: walk 8s linear infinite;
+    }
+
+    .employee.celebrate {
+      animation: celebrate 800ms ease 2;
+    }
+
+    .employee .head {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffd5ad;
+      margin: 0 auto;
+      border: 2px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .employee .body {
+      width: 18px;
+      height: 18px;
+      border-radius: 8px 8px 6px 6px;
+      margin: 2px auto 0;
+      position: relative;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    .employee .legs {
+      width: 16px;
+      height: 8px;
+      margin: 0 auto;
+      border-bottom: 4px solid #1b2530;
+      border-left: 3px solid transparent;
+      border-right: 3px solid transparent;
+    }
+
+    .employee .tag {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: -12px;
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 999px;
+      white-space: nowrap;
+      background: rgba(9, 13, 18, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .office-decor {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .plant,
+    .cabinet,
+    .whiteboard,
+    .safe,
+    .robot {
+      position: absolute;
+      border-radius: 12px;
+      opacity: 0;
+      transition: opacity 220ms ease, transform 220ms ease;
+      transform: translateY(6px);
+    }
+
+    .office-wrap.has-plants .plant,
+    .office-wrap.has-cabinets .cabinet,
+    .office-wrap.has-board .whiteboard,
+    .office-wrap.has-safe .safe,
+    .office-wrap.has-robot .robot {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .plant {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(180deg, #2ca56f, #1b6f4d);
+      box-shadow: 0 12px 0 -7px #6b4a38;
+    }
+
+    .cabinet {
+      width: 40px;
+      height: 58px;
+      background: linear-gradient(180deg, #637489, #485767);
+    }
+
+    .whiteboard {
+      width: 78px;
+      height: 48px;
+      background: linear-gradient(180deg, #e8f2ff, #c6d6e9);
+      box-shadow: inset 0 0 0 4px #5d6d7f;
+    }
+
+    .safe {
+      width: 54px;
+      height: 54px;
+      background: linear-gradient(180deg, #78828f, #48515d);
+      border: 3px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .safe::after {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .robot {
+      width: 20px;
+      height: 24px;
+      background: linear-gradient(180deg, #b8c7e6, #7c93be);
+      border-radius: 8px;
+      animation: hoverBot 2s ease-in-out infinite;
+    }
+
+    .robot::before,
+    .robot::after {
+      content: "";
+      position: absolute;
+      top: 7px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #233351;
+    }
+
+    .robot::before { left: 5px; }
+    .robot::after { right: 5px; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      padding: 12px;
+      align-items: center;
+    }
+
+    .main-btn {
+      padding: 16px 18px;
+      font-size: 18px;
+      background: linear-gradient(180deg, #ffcb68, #cc8d2b);
+      color: #1d1200;
+    }
+
+    .helper {
+      padding: 10px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .event-card {
+      position: absolute;
+      right: 18px;
+      top: 18px;
+      width: 220px;
+      padding: 12px;
+      z-index: 4;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .event-card.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .event-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .event-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .toast-layer {
+      overflow: hidden;
+    }
+
+    .floaty {
+      position: absolute;
+      font-weight: 700;
+      animation: floatUp 1.2s ease forwards;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      white-space: nowrap;
+    }
+
+    .achievement-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 14px;
+      width: 240px;
+      z-index: 30;
+      display: none;
+    }
+
+    .achievement-toast.show {
+      display: block;
+      animation: slideIn 4s ease forwards;
+    }
+
+    .progress {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #77d2ff, #69d1a6);
+      transition: width 220ms ease;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      padding-bottom: 4px;
+    }
+
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    @keyframes walk {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(24px, -2px); }
+      50% { transform: translate(48px, 0); }
+      75% { transform: translate(24px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes celebrate {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.12); }
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-54px); }
+    }
+
+    @keyframes slideIn {
+      0%, 10% { opacity: 0; transform: translateY(14px); }
+      16%, 78% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(14px); }
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0); }
+      25% { transform: translate(2px, 1px); }
+      50% { transform: translate(-2px, 0); }
+      75% { transform: translate(2px, -1px); }
+      100% { transform: translate(0); }
+    }
+
+    @keyframes hoverBot {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .office-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(3, 160px);
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 10px;
+      }
+
+      .topbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .office-wrap {
+        min-height: 700px;
+      }
+
+      .office-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(6, 130px);
+        margin-top: 96px;
+      }
+
+      .windows {
+        grid-template-columns: repeat(2, 1fr);
+        height: 70px;
+      }
+
+      .event-card {
+        width: calc(100% - 36px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    CHANGELOG
+    - Rebuilt the game into a visual office-focused idle tycoon with animated employees and rooms.
+    - Added visible department unlocks, office-stage upgrades, event effects, floating feedback, and achievement toasts.
+    - Kept the game lightweight and browser-only, with localStorage save/load and no dependencies.
+  -->
+  <div class="app">
+    <header class="topbar">
+      <div class="stat">
+        <div class="stat-label">Cash</div>
+        <div class="stat-value" id="cashStat">$0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Income / sec</div>
+        <div class="stat-value" id="incomeStat">$0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Reputation</div>
+        <div class="stat-value" id="repStat">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">XP</div>
+        <div class="stat-value" id="xpStat">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Office Stage</div>
+        <div class="stat-value" id="stageStat">Home Office</div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel">
+        <h2>Team</h2>
+        <div class="list" id="hireList"></div>
+      </aside>
+
+      <main class="center">
+        <section class="office-wrap" id="office">
+          <div class="event-card" id="eventCard">
+            <div class="event-title" id="eventTitle"></div>
+            <div class="event-meta" id="eventMeta"></div>
+          </div>
+          <div class="windows">
+            <div class="window"></div>
+            <div class="window"></div>
+            <div class="window"></div>
+            <div class="window"></div>
+          </div>
+          <div class="office-grid" id="officeGrid"></div>
+          <div class="office-decor">
+            <div class="plant" style="left:20px; bottom:20px;"></div>
+            <div class="plant" style="right:30px; bottom:36px;"></div>
+            <div class="cabinet" style="left:22px; top:140px;"></div>
+            <div class="whiteboard" style="right:24px; top:126px;"></div>
+            <div class="safe" style="right:22px; bottom:26px;"></div>
+            <div class="robot" style="left:52%; bottom:90px;"></div>
+          </div>
+          <div class="employee-layer" id="employeeLayer"></div>
+          <div class="effects-layer" id="effectsLayer"></div>
+        </section>
+
+        <section class="helper">
+          <div>
+            <strong>Next best action:</strong>
+            <span id="helperText">Hire your first intern.</span>
+          </div>
+          <div class="subtle" id="playerPulse">Office waking up</div>
+        </section>
+
+        <section class="controls">
+          <button class="main-btn" id="actionBtn">Post JE</button>
+          <button class="mini-btn" id="saveBtn">Save</button>
+          <button class="mini-btn" id="resetBtn">Reset</button>
+        </section>
+      </main>
+
+      <aside class="panel">
+        <h2>Growth</h2>
+        <div class="list" id="upgradeList"></div>
+        <h2 style="margin-top:14px;">Departments</h2>
+        <div class="list" id="departmentList"></div>
+      </aside>
+    </div>
+
+    <div class="footer-note">Open this file directly in a browser. Progress saves automatically.</div>
+  </div>
+
+  <div class="achievement-toast" id="achievementToast">
+    <div class="pill">Achievement</div>
+    <div style="margin-top:8px; font-weight:700;" id="achievementTitle"></div>
+    <div class="subtle" id="achievementBody"></div>
+  </div>
+
+  <script>
+    const SAVE_KEY = "accounting-tycoon-evolution-v1";
+    const TICK_MS = 1000;
+    const ACTIONS = [
+      "Post JE",
+      "Reconcile",
+      "Close Period",
+      "Fix Variance",
+      "Approve Accrual",
+      "Clear RNI",
+      "Review Invoice",
+      "Solve Workday Error",
+      "Month-End Push"
+    ];
+
+    const roles = [
+      { id: "intern", name: "Intern", cost: 15, income: 0.8, rep: 0, badge: "☕", color: "#8bd3ff", room: "ops" },
+      { id: "staff", name: "Staff Accountant", cost: 60, income: 3.2, rep: 1, badge: "📘", color: "#8fe29d", room: "ops" },
+      { id: "senior", name: "Senior Accountant", cost: 220, income: 9, rep: 2, badge: "📗", color: "#ffd977", room: "reporting" },
+      { id: "manager", name: "Accounting Manager", cost: 700, income: 22, rep: 4, badge: "📊", color: "#ffad7a", room: "manager" },
+      { id: "director", name: "Finance Director", cost: 2400, income: 58, rep: 8, badge: "🏆", color: "#d6a3ff", room: "exec" }
+    ];
+
+    const upgrades = [
+      { id: "dual", name: "Dual Monitors", cost: 90, bonus: 0.12, note: "Desk setup +12%", unlock: () => office.classList.add("has-board") },
+      { id: "plants", name: "Office Plants", cost: 140, bonus: 0.08, note: "Mood boost +8%", unlock: () => office.classList.add("has-plants") },
+      { id: "coffee", name: "Coffee Station", cost: 260, bonus: 0.18, note: "Click value +18%", clickBonus: 0.18, unlock: () => {} },
+      { id: "cabinet", name: "Filing Cabinets", cost: 420, bonus: 0.14, note: "Ops output +14%", unlock: () => office.classList.add("has-cabinets") },
+      { id: "erp", name: "ERP License", cost: 980, bonus: 0.22, note: "All rooms +22%", unlock: () => {} },
+      { id: "safe", name: "Treasury Safe", cost: 1800, bonus: 0.18, note: "Reputation gain +18%", unlock: () => office.classList.add("has-safe") },
+      { id: "robot", name: "AI Assistant", cost: 3200, bonus: 0.24, note: "Auto-work +24%", unlock: () => office.classList.add("has-robot") }
+    ];
+
+    const departments = [
+      { id: "ops", name: "AP / AR", cost: 0, icon: "🧾", note: "Invoice stacks", roomClass: "ops-room" },
+      { id: "reporting", name: "Reporting", cost: 180, icon: "📈", note: "Charts and close work", roomClass: "reporting-room" },
+      { id: "payroll", name: "Payroll", cost: 360, icon: "📅", note: "Calendars and pay runs", roomClass: "payroll-room" },
+      { id: "audit", name: "Audit", cost: 900, icon: "🔎", note: "Panic room", roomClass: "audit-room" },
+      { id: "manager", name: "Manager Office", cost: 1400, icon: "🧠", note: "Leadership bonus", roomClass: "manager-room" },
+      { id: "exec", name: "Executive Suite", cost: 2600, icon: "💼", note: "Director presence", roomClass: "coffee-room" }
+    ];
+
+    const officeStages = [
+      { threshold: 0, name: "Home Office", pulse: "One desk hustle" },
+      { threshold: 150, name: "Small Office", pulse: "Morning standup energy" },
+      { threshold: 650, name: "Growing Firm", pulse: "Teams are forming" },
+      { threshold: 1800, name: "Corporate Floor", pulse: "Managers roaming" },
+      { threshold: 4200, name: "Big Four Competitor", pulse: "Excel empire" },
+      { threshold: 9000, name: "Global Finance HQ", pulse: "Finance tower mode" }
+    ];
+
+    const eventPool = [
+      { id: "rush", title: "Month-End Close", meta: "+50% XP for 20s", duration: 20000, className: "event-rush", apply: () => state.temp.xpBoost = 1.5, end: () => state.temp.xpBoost = 1 },
+      { id: "outage", title: "Workday Outage", meta: "-30% income for 18s", duration: 18000, className: "event-outage", apply: () => state.temp.incomeMult *= 0.7, end: () => state.temp.incomeMult /= 0.7 },
+      { id: "client", title: "Big Client Won", meta: "Instant cash burst", duration: 5000, className: "", apply: () => gainCash(220, "bonus"), end: () => {} },
+      { id: "panic", title: "Audit Panic", meta: "Click to calm the team", duration: 15000, className: "event-panic", apply: () => state.temp.panic = true, end: () => state.temp.panic = false }
+    ];
+
+    const state = loadState();
+    const office = document.getElementById("office");
+    const officeGrid = document.getElementById("officeGrid");
+    const employeeLayer = document.getElementById("employeeLayer");
+    const effectsLayer = document.getElementById("effectsLayer");
+    const hireList = document.getElementById("hireList");
+    const upgradeList = document.getElementById("upgradeList");
+    const departmentList = document.getElementById("departmentList");
+    const helperText = document.getElementById("helperText");
+    const playerPulse = document.getElementById("playerPulse");
+    const actionBtn = document.getElementById("actionBtn");
+    const achievementToast = document.getElementById("achievementToast");
+    const achievementTitle = document.getElementById("achievementTitle");
+    const achievementBody = document.getElementById("achievementBody");
+    const eventCard = document.getElementById("eventCard");
+    const eventTitle = document.getElementById("eventTitle");
+    const eventMeta = document.getElementById("eventMeta");
+
+    function defaultState() {
+      return {
+        cash: 40,
+        xp: 0,
+        rep: 0,
+        totalEarned: 40,
+        clickValue: 6,
+        hires: {},
+        upgrades: {},
+        departments: { ops: true },
+        achievements: {},
+        actionIndex: 0,
+        lastTick: Date.now(),
+        eventEndsAt: 0,
+        eventId: "",
+        temp: {
+          incomeMult: 1,
+          xpBoost: 1,
+          panic: false
+        }
+      };
+    }
+
+    function loadState() {
+      const base = defaultState();
+      try {
+        const raw = localStorage.getItem(SAVE_KEY);
+        if (!raw) {
+          return base;
+        }
+        const parsed = JSON.parse(raw);
+        return {
+          ...base,
+          ...parsed,
+          temp: { ...base.temp, ...(parsed.temp || {}) },
+          hires: { ...base.hires, ...(parsed.hires || {}) },
+          upgrades: { ...base.upgrades, ...(parsed.upgrades || {}) },
+          departments: { ...base.departments, ...(parsed.departments || {}) },
+          achievements: { ...base.achievements, ...(parsed.achievements || {}) }
+        };
+      } catch (error) {
+        return base;
+      }
+    }
+
+    function saveState() {
+      state.lastTick = Date.now();
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    }
+
+    function money(value) {
+      return "$" + value.toFixed(value >= 100 ? 0 : 1);
+    }
+
+    function totalIncome() {
+      const upgradeBoost = upgrades.reduce((sum, upgrade) => sum + (state.upgrades[upgrade.id] ? upgrade.bonus : 0), 0);
+      const roleIncome = roles.reduce((sum, role) => sum + ((state.hires[role.id] || 0) * role.income), 0);
+      return roleIncome * (1 + upgradeBoost) * state.temp.incomeMult;
+    }
+
+    function gainCash(amount, kind = "cash") {
+      state.cash += amount;
+      state.totalEarned += Math.max(0, amount);
+      spawnFloat(kind === "xp" ? "+" + amount.toFixed(0) + " XP" : "+" + money(amount), kind);
+    }
+
+    function gainXP(amount) {
+      state.xp += amount * state.temp.xpBoost;
+      spawnFloat("+" + Math.round(amount * state.temp.xpBoost) + " XP", "xp");
+    }
+
+    function clickAction() {
+      const value = state.clickValue * (1 + (state.upgrades.coffee ? 0.18 : 0));
+      gainCash(value);
+      gainXP(3);
+      state.actionIndex = (state.actionIndex + 1) % ACTIONS.length;
+      actionBtn.textContent = ACTIONS[state.actionIndex];
+      if (state.temp.panic) {
+        state.temp.panic = false;
+        state.rep += 3;
+        showAchievement("Audit Survivor", "You calmed the team and earned reputation.");
+        clearEvent();
+      }
+      celebrateRandomEmployee();
+      checkAchievements();
+      render();
+    }
+
+    function buyRole(roleId) {
+      const role = roles.find((item) => item.id === roleId);
+      const owned = state.hires[roleId] || 0;
+      const cost = Math.round(role.cost * Math.pow(1.18, owned));
+      if (state.cash < cost) {
+        return;
+      }
+      state.cash -= cost;
+      state.hires[roleId] = owned + 1;
+      state.rep += role.rep;
+      gainXP(6 + owned);
+      checkAchievements();
+      render();
+    }
+
+    function buyUpgrade(upgradeId) {
+      const upgrade = upgrades.find((item) => item.id === upgradeId);
+      if (state.upgrades[upgradeId] || state.cash < upgrade.cost) {
+        return;
+      }
+      state.cash -= upgrade.cost;
+      state.upgrades[upgradeId] = true;
+      upgrade.unlock();
+      showAchievement(upgrade.name, "The office looks sharper instantly.");
+      render();
+    }
+
+    function unlockDepartment(deptId) {
+      const dept = departments.find((item) => item.id === deptId);
+      if (state.departments[deptId] || state.cash < dept.cost) {
+        return;
+      }
+      state.cash -= dept.cost;
+      state.departments[deptId] = true;
+      state.rep += 4;
+      showAchievement(dept.name + " Open", "A new room came to life.");
+      render();
+    }
+
+    function checkAchievements() {
+      if (!state.achievements["First JE"] && state.totalEarned >= 50) {
+        unlockAchievement("First JE", "The first numbers are moving.");
+      }
+      if (!state.achievements["First Hire"] && totalEmployees() >= 1) {
+        unlockAchievement("First Hire", "The office finally has company.");
+      }
+      if (!state.achievements["Controller Energy"] && totalEmployees() >= 6) {
+        unlockAchievement("Controller Energy", "Your floor feels properly busy.");
+      }
+      if (!state.achievements["Big Four Energy"] && unlockedDepartments() >= 3) {
+        unlockAchievement("Big Four Energy", "Departments now feel like a firm.");
+      }
+    }
+
+    function unlockAchievement(key, body) {
+      state.achievements[key] = true;
+      showAchievement(key, body);
+    }
+
+    function showAchievement(title, body) {
+      achievementTitle.textContent = title;
+      achievementBody.textContent = body;
+      achievementToast.classList.remove("show");
+      void achievementToast.offsetWidth;
+      achievementToast.classList.add("show");
+      for (let index = 0; index < 5; index += 1) {
+        spawnFloat(index % 2 === 0 ? "+wow" : "+shine", "cash");
+      }
+    }
+
+    function totalEmployees() {
+      return roles.reduce((sum, role) => sum + (state.hires[role.id] || 0), 0);
+    }
+
+    function unlockedDepartments() {
+      return departments.filter((dept) => state.departments[dept.id]).length;
+    }
+
+    function currentStage() {
+      let stage = officeStages[0];
+      for (const item of officeStages) {
+        if (state.totalEarned >= item.threshold) {
+          stage = item;
+        }
+      }
+      return stage;
+    }
+
+    function helperMessage() {
+      const nextRole = roles.find((role) => (state.hires[role.id] || 0) === 0);
+      const nextUpgrade = upgrades.find((upgrade) => !state.upgrades[upgrade.id]);
+      const nextDept = departments.find((dept) => !state.departments[dept.id] && dept.cost > 0);
+      if (totalEmployees() === 0) {
+        return "Hire 1 Intern.";
+      }
+      if (nextDept && state.cash >= nextDept.cost * 0.7) {
+        return "Save for " + nextDept.name + ".";
+      }
+      if (nextUpgrade && state.cash >= nextUpgrade.cost * 0.7) {
+        return "Upgrade " + nextUpgrade.name + ".";
+      }
+      if (nextRole) {
+        return "Grow the team with " + nextRole.name + ".";
+      }
+      return "Push the next office stage.";
+    }
+
+    function scaledRoleCost(roleId) {
+      const role = roles.find((item) => item.id === roleId);
+      const owned = state.hires[roleId] || 0;
+      return Math.round(role.cost * Math.pow(1.18, owned));
+    }
+
+    function buildRooms() {
+      officeGrid.innerHTML = "";
+      departments.forEach((dept) => {
+        const room = document.createElement("div");
+        room.className = "room " + dept.roomClass + (state.departments[dept.id] ? "" : " locked");
+        room.innerHTML = `
+          <div class="room-title">
+            <span>${dept.name}</span>
+            <span>${state.departments[dept.id] ? "Open" : "Locked"}</span>
+          </div>
+          <div class="room-theme">${dept.icon}</div>
+          <div class="desks">
+            <div class="desk ${state.upgrades.dual || state.upgrades.erp ? "dual" : ""} ${state.upgrades.erp ? "erp" : ""}">
+              <div class="screen"></div><div class="screen2"></div>
+            </div>
+            <div class="desk ${state.upgrades.dual || state.upgrades.erp ? "dual" : ""} ${state.upgrades.erp ? "erp" : ""}">
+              <div class="screen"></div><div class="screen2"></div>
+            </div>
+          </div>
+        `;
+        officeGrid.appendChild(room);
+      });
+    }
+
+    function buildEmployees() {
+      employeeLayer.innerHTML = "";
+      const roomPositions = {
+        ops: [{ x: 14, y: 58 }, { x: 28, y: 72 }, { x: 15, y: 81 }],
+        reporting: [{ x: 46, y: 58 }, { x: 59, y: 72 }, { x: 49, y: 84 }],
+        payroll: [{ x: 78, y: 58 }, { x: 91, y: 72 }, { x: 80, y: 84 }],
+        audit: [{ x: 14, y: 145 }, { x: 28, y: 158 }, { x: 16, y: 171 }],
+        manager: [{ x: 47, y: 145 }, { x: 60, y: 160 }, { x: 48, y: 172 }],
+        exec: [{ x: 78, y: 145 }, { x: 90, y: 160 }, { x: 80, y: 172 }]
+      };
+
+      roles.forEach((role) => {
+        const count = state.hires[role.id] || 0;
+        for (let index = 0; index < count; index += 1) {
+          const slot = roomPositions[role.room][index % roomPositions[role.room].length];
+          if (!slot || !state.departments[role.room]) {
+            continue;
+          }
+          const employee = document.createElement("div");
+          const walking = index % 3 === 2 ? " walking" : "";
+          employee.className = "employee" + walking;
+          employee.style.left = slot.x + "%";
+          employee.style.top = slot.y + "%";
+          employee.innerHTML = `
+            <div class="tag">${role.badge}</div>
+            <div class="head"></div>
+            <div class="body" style="background:${role.color};"></div>
+            <div class="legs"></div>
+          `;
+          employeeLayer.appendChild(employee);
+        }
+      });
+    }
+
+    function renderHireList() {
+      hireList.innerHTML = "";
+      roles.forEach((role) => {
+        const owned = state.hires[role.id] || 0;
+        const cost = scaledRoleCost(role.id);
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="card-row">
+            <strong>${role.name}</strong>
+            <span class="pill">${owned}</span>
+          </div>
+          <div class="subtle">${role.badge} ${money(role.income)}/s</div>
+          <button class="buy-btn" ${state.cash < cost ? "disabled" : ""}>Hire ${money(cost)}</button>
+        `;
+        card.querySelector("button").addEventListener("click", () => buyRole(role.id));
+        hireList.appendChild(card);
+      });
+    }
+
+    function renderUpgradeList() {
+      upgradeList.innerHTML = "";
+      upgrades.forEach((upgrade) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const bought = !!state.upgrades[upgrade.id];
+        card.innerHTML = `
+          <div class="card-row">
+            <strong>${upgrade.name}</strong>
+            <span class="pill">${bought ? "On" : money(upgrade.cost)}</span>
+          </div>
+          <div class="subtle">${upgrade.note}</div>
+          <button class="buy-btn" ${bought || state.cash < upgrade.cost ? "disabled" : ""}>${bought ? "Installed" : "Upgrade"}</button>
+        `;
+        card.querySelector("button").addEventListener("click", () => buyUpgrade(upgrade.id));
+        upgradeList.appendChild(card);
+      });
+    }
+
+    function renderDepartmentList() {
+      departmentList.innerHTML = "";
+      departments.forEach((dept) => {
+        const open = !!state.departments[dept.id];
+        const card = document.createElement("div");
+        card.className = "card";
+        const progress = open ? 100 : Math.min(100, (state.cash / dept.cost) * 100 || 0);
+        card.innerHTML = `
+          <div class="card-row">
+            <strong>${dept.icon} ${dept.name}</strong>
+            <span class="pill">${open ? "Live" : money(dept.cost)}</span>
+          </div>
+          <div class="subtle">${dept.note}</div>
+          <div class="progress"><span style="width:${progress}%;"></span></div>
+          <button class="buy-btn" ${open || state.cash < dept.cost ? "disabled" : ""}>${open ? "Unlocked" : "Open Room"}</button>
+        `;
+        card.querySelector("button").addEventListener("click", () => unlockDepartment(dept.id));
+        departmentList.appendChild(card);
+      });
+    }
+
+    function renderStats() {
+      const stage = currentStage();
+      document.getElementById("cashStat").textContent = money(state.cash);
+      document.getElementById("incomeStat").textContent = money(totalIncome());
+      document.getElementById("repStat").textContent = String(state.rep);
+      document.getElementById("xpStat").textContent = String(Math.round(state.xp));
+      document.getElementById("stageStat").textContent = stage.name;
+      helperText.textContent = helperMessage();
+      playerPulse.textContent = stage.pulse;
+    }
+
+    function renderOfficeState() {
+      const stageIndex = officeStages.indexOf(currentStage());
+      office.classList.remove("stage-0", "stage-1", "stage-2", "stage-3", "stage-4", "stage-5");
+      office.classList.add("stage-" + stageIndex);
+      office.classList.toggle("has-plants", !!state.upgrades.plants);
+      office.classList.toggle("has-cabinets", !!state.upgrades.cabinet);
+      office.classList.toggle("has-board", !!state.upgrades.dual);
+      office.classList.toggle("has-safe", !!state.upgrades.safe);
+      office.classList.toggle("has-robot", !!state.upgrades.robot);
+      buildRooms();
+      buildEmployees();
+    }
+
+    function render() {
+      renderStats();
+      renderHireList();
+      renderUpgradeList();
+      renderDepartmentList();
+      renderOfficeState();
+      saveState();
+    }
+
+    function spawnFloat(text, type) {
+      const floaty = document.createElement("div");
+      floaty.className = "floaty";
+      floaty.textContent = text;
+      floaty.style.left = 40 + Math.random() * 20 + "%";
+      floaty.style.top = 70 + Math.random() * 10 + "%";
+      floaty.style.color = type === "xp" ? "#8bd3ff" : "#ffd977";
+      effectsLayer.appendChild(floaty);
+      setTimeout(() => floaty.remove(), 1200);
+    }
+
+    function celebrateRandomEmployee() {
+      const pool = employeeLayer.querySelectorAll(".employee");
+      if (!pool.length) {
+        return;
+      }
+      const employee = pool[Math.floor(Math.random() * pool.length)];
+      employee.classList.add("celebrate");
+      setTimeout(() => employee.classList.remove("celebrate"), 1600);
+    }
+
+    function maybeTriggerEvent() {
+      if (state.eventEndsAt > Date.now()) {
+        return;
+      }
+      if (Math.random() > 0.18) {
+        return;
+      }
+      const event = eventPool[Math.floor(Math.random() * eventPool.length)];
+      clearEvent();
+      state.eventId = event.id;
+      state.eventEndsAt = Date.now() + event.duration;
+      office.classList.add(event.className);
+      eventTitle.textContent = event.title;
+      eventMeta.textContent = event.meta;
+      eventCard.classList.add("show");
+      event.apply();
+      if (event.id === "client") {
+        showAchievement("Big Client Won", "A splashy payday hit the office.");
+      }
+      renderStats();
+    }
+
+    function clearEvent() {
+      const active = eventPool.find((item) => item.id === state.eventId);
+      if (active) {
+        active.end();
+        office.classList.remove(active.className);
+      }
+      state.eventId = "";
+      state.eventEndsAt = 0;
+      eventCard.classList.remove("show");
+      renderStats();
+    }
+
+    function handleTick() {
+      const now = Date.now();
+      const elapsed = Math.max(1, Math.floor((now - state.lastTick) / TICK_MS));
+      if (elapsed > 0) {
+        const income = totalIncome();
+        state.cash += income * elapsed;
+        state.totalEarned += income * elapsed;
+        state.xp += totalEmployees() * elapsed * state.temp.xpBoost;
+      }
+      state.lastTick = now;
+
+      if (state.eventEndsAt && now >= state.eventEndsAt) {
+        clearEvent();
+      }
+
+      maybeTriggerEvent();
+      checkAchievements();
+      render();
+    }
+
+    actionBtn.addEventListener("click", clickAction);
+    document.getElementById("saveBtn").addEventListener("click", saveState);
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      localStorage.removeItem(SAVE_KEY);
+      Object.assign(state, defaultState());
+      render();
+    });
+
+    const hiddenDelta = Math.floor((Date.now() - state.lastTick) / 1000);
+    if (hiddenDelta > 0) {
+      state.cash += totalIncome() * hiddenDelta;
+      state.totalEarned += totalIncome() * hiddenDelta;
+    }
+
+    render();
+    setInterval(handleTick, TICK_MS);
+  </script>
+</body>
+</html>
