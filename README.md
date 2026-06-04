@@ -1,22 +1,21 @@
 # Accounting Tycoon Evolution
 
-Lightweight idle tycoon game built with plain `HTML`, `CSS`, and `JavaScript`.
+Casual mobile-style accounting office idle tycoon made with plain `HTML`, `CSS`, and `JavaScript`.
+
+## Current Direction
+
+The game is now built around a top-down 2D office scene with animated employees, department rooms, accounting chaos task bubbles, visual upgrades, generated sound effects, missions, events, and CPA prestige.
 
 ## Files
 
 - `index.html`: complete playable game, ready to open in a browser.
 
-## Play online with GitHub Pages
+## Play Online
 
-1. Go to `Settings` -> `Pages`.
-2. Under `Build and deployment`, choose `Deploy from a branch`.
-3. Select `main` and folder `/ (root)`.
-4. Save and wait for GitHub to publish the site.
+GitHub Pages URL:
 
-Your final URL will look like:
+`https://ajb-porras.github.io/accounting-tycoon-evolution/`
 
-`https://AJB-Porras.github.io/accounting-tycoon-evolution/`
-
-## Play locally
+## Play Locally
 
 Open `index.html` directly in your browser.
